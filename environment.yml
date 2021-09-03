@@ -1,0 +1,13 @@
+name: reverb_segfault_repro
+
+dependencies:
+  - python=3
+  - pip
+  - pip:
+    - autopep8
+    - ipython
+    - matplotlib
+    - numba>=0.49.1
+    - scipy>=1.2.3
+    - ray[default]>=1.5.1
+    - tf-agents[reverb]==0.9.0
