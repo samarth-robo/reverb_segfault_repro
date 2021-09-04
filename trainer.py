@@ -178,12 +178,6 @@ class Trainer:
       if do_eval:
         run_info_ids.append(eval_worker.run.remote())
       
-      # update
-      train_timer.start(0)
-      losses: LossInfo = learner.run(iterations=n_sgd_steps)
-      train_speed, train_time = train_timer.stop(n_sgd_steps)
-      # self.logger.info(f'Training done in {train_time:.3f} s @ {train_speed:.3f} steps/s')
-      
       # sync
       train_run_infos = ray.get(run_info_ids)
       if do_eval:
@@ -193,9 +187,15 @@ class Trainer:
       collect_speed, collect_time = collect_timer.stop(env_steps, override_time=collect_time)
       # self.logger.info(f'Collection done in {collect_time:.3f} s @ {collect_speed:.3f} steps/s')
       train_run_infos = combine_train_metrics(train_run_infos)
-      train_run_infos = dict(train_run_infos, collect_speed=collect_speed, train_speed=train_speed,
-                             loss=losses[0].numpy())
+      train_run_infos = dict(train_run_infos, collect_speed=collect_speed)
 
+      # update
+      train_timer.start(0)
+      losses: LossInfo = learner.run(iterations=n_sgd_steps)
+      train_speed, train_time = train_timer.stop(n_sgd_steps)
+      # self.logger.info(f'Training done in {train_time:.3f} s @ {train_speed:.3f} steps/s')
+      train_run_infos = dict(train_run_infos, train_speed=train_speed, loss=losses[0].numpy())
+      
       # log and summarize
       self.log_metrics(train_run_infos, f'Train {(itr+1):03d}/{n_iters:03d}')
       if do_summary:
